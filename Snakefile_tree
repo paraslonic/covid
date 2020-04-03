@@ -4,14 +4,21 @@ GENOMES, = glob_wildcards("fna/{genome}.fasta")
 
 #localrules: all,  make_path, calc_complexity
 
-
-
 def aggregate_input(wildcards):
     return expand("Results/ortho/coreogs_aligned/{og}.fasta.iqtree",
                 og=glob_wildcards(os.path.join("Results/ortho/coreogs/", "{og}.fasta")).og )
 
 rule all:
-	input: "Results/ortho/Orthogroups.txt", aggregate_input
+	input: directory("Results/ortho/coreogs/"), "qu"
+	#input: "Results/ortho/Orthogroups.txt", aggregate_input
+
+rule aggregate:
+    input:
+        aggregate_input
+    output:
+        "qu"
+    shell:
+        "touch {output}"
 
 rule tree_for_core:
 	input:
@@ -38,6 +45,7 @@ checkpoint makeCoreOGfastas:
 		coreog=directory("Results/ortho/coreogs/")
 	shell:
 		"""
+		mkdir -p tmp
 		cat ffn/*.fasta > tmp/all_genes.fasta
 		mkdir -p Results/ortho/coreogs
 		perl scripts/splitToOg.pl Results/ortho/Orthogroups.txt tmp/all_genes.fasta Results/ortho/coreogs Results/ortho/SingleCopyOrthogroups.txt
@@ -65,7 +73,17 @@ rule prokka:
 		name=$(basename {input} .fasta);
 		prokka --cpus {threads} --outdir {output} --force --prefix $name --locustag $name {input}
 		"""
-
+rule make_ffn:
+	input:
+		ancient("prokka/{qu}")
+	output:
+		"ffn/{qu}.fasta"
+	conda: "envs/scripts.yaml"
+	shell:
+		"""
+		name=$(basename {input})
+		python3 scripts/GBffn.py -gb  {input}/$name.gbk > {output}
+		"""
 rule make_faa:
 	input:
 		ancient("prokka/{qu}")
