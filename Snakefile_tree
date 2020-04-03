@@ -5,11 +5,12 @@ GENOMES, = glob_wildcards("fna/{genome}.fasta")
 #localrules: all,  make_path, calc_complexity
 
 def aggregate_input(wildcards):
-    return expand("Results/ortho/coreogs_aligned/{og}.fasta.iqtree",
-                og=glob_wildcards(os.path.join("Results/ortho/coreogs/", "{og}.fasta")).og )
+	checkpoint_output = checkpoints.makeCoreOGfastas.get(**wildcards).output[0]
+	return expand("Results/ortho/coreogs_aligned/{og}.fasta.iqtree",
+		og=glob_wildcards(os.path.join("Results/ortho/coreogs/", "{og}.fasta")).og )
 
 rule all:
-	input: directory("Results/ortho/coreogs/"), "qu"
+	input: "qu"
 	#input: "Results/ortho/Orthogroups.txt", aggregate_input
 
 rule aggregate:
@@ -55,7 +56,8 @@ rule orthofinder:
 	input: 
 		expand("faa/{qu}.fasta", qu=GENOMES)
 	output:
-		"Results/ortho/Orthogroups.txt"
+		"Results/ortho/Orthogroups.txt",
+		"Results/ortho/SingleCopyOrthogroups.txt"
 	threads: 4
 	conda: "envs/ortho.yaml"
 	log: "log_of.txt"
