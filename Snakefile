@@ -9,7 +9,8 @@ rule select_random:
 	shell: 
 		"""
 		python helpers/select_random.py {input} {output} 5
-		python split_contigs.py {output} fna
+		mkdir -p fna
+		python helpers/split_contigs.py {output} fna
 		"""
 
 rule make_nr:
