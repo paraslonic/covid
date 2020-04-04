@@ -6,8 +6,8 @@ GENOMES, = glob_wildcards("fna/{genome}.fasta")
 
 def aggregate_input(wildcards):
 	checkpoint_output = checkpoints.makeCoreOGfastas.get(**wildcards).output[0]
-	return expand("Results/ortho/coreogs_aligned/{og}.fasta.iqtree",
-		og=glob_wildcards(os.path.join("Results/ortho/coreogs/", "{og}.fasta")).og )
+	return expand("Results/ortho/coreogs_aligned_nuc/{og}.fasta.iqtree",
+		og=glob_wildcards(os.path.join("Results/ortho/coreogs_nuc/", "{og}.fasta")).og )
 
 rule all:
 	input: "qu"
@@ -21,23 +21,43 @@ rule aggregate:
     shell:
         "touch {output}"
 
+rule paml:
+	input: "Results/ortho/coreogs_aligned_nuc/{og}.fasta.iqtree"
+	output: "Results/paml/{og}/out.mlc"
+	shell:
+		"""
+		mkdir -p paml/{wildcards.og}
+		cp codeml.ctl paml/{wildcards.og}
+		sed 's/OG/{wildcards.og}/' paml/{wildcards.og}/codeml.ctl
+		"""
+
 rule tree_for_core:
 	input:
-		"Results/ortho/coreogs_aligned/{og}.fasta"	
+		"Results/ortho/coreogs_aligned_nuc/{og}.fasta"	
 	output:
-		"Results/ortho/coreogs_aligned/{og}.fasta.iqtree"
+		"Results/ortho/coreogs_aligned_nuc/{og}.fasta.treefile"
 	shell:
 		"{config[iqtree.bin]} -s {input}"
 
-rule align_core:
+rule pal2nal:
 	input:
-		"Results/ortho/coreogs/{og}.fasta"
+		prot="Results/ortho/coreogs_aligned_prot/{og}.fasta",
+		nuc="Results/ortho/coreogs_nuc/{og}.fasta"
 	output:
-		"Results/ortho/coreogs_aligned/{og}.fasta"
+		"Results/ortho/coreogs_aligned_nuc/{og}.fasta"
+	shell:
+		"perl helpers/pal2nal.pl {input.prot} {input.nuc} -output fasta > {output}"
+	
+
+rule align_core_prot:
+	input:
+		"Results/ortho/coreogs_prot/{og}.fasta"
+	output:
+		"Results/ortho/coreogs_aligned_prot/{og}.fasta"
 	shell:
 		"scripts/./muscle -in {input} -out {output} -quiet"
 	
-checkpoint makeCoreOGfastas:
+checkpoint makeCoreOGfastas: 
 	input:
 		og="Results/ortho/Orthogroups.txt",
 		coreOg="Results/ortho/SingleCopyOrthogroups.txt",
