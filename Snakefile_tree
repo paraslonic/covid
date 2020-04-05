@@ -6,7 +6,7 @@ GENOMES, = glob_wildcards("fna/{genome}.fasta")
 
 def aggregate_input(wildcards):
 	checkpoint_output = checkpoints.makeCoreOGfastas.get(**wildcards).output[0]
-	return expand("Results/ortho/coreogs_aligned_nuc/{og}.fasta.iqtree",
+	return expand("Results/paml/{og}/out.mlc",
 		og=glob_wildcards(os.path.join("Results/ortho/coreogs_nuc/", "{og}.fasta")).og )
 
 rule all:
@@ -22,13 +22,15 @@ rule aggregate:
         "touch {output}"
 
 rule paml:
-	input: "Results/ortho/coreogs_aligned_nuc/{og}.fasta.iqtree"
+	input: "Results/ortho/coreogs_aligned_nuc/{og}.fasta.treefile"
 	output: "Results/paml/{og}/out.mlc"
 	shell:
 		"""
 		mkdir -p paml/{wildcards.og}
 		cp codeml.ctl paml/{wildcards.og}
-		sed 's/OG/{wildcards.og}/' paml/{wildcards.og}/codeml.ctl
+		sed -i 	's/OG/{wildcards.og}/g' paml/{wildcards.og}/codeml.ctl
+		cd paml/{wildcards.og}
+		codeml
 		"""
 
 rule tree_for_core:

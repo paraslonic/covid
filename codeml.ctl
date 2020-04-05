@@ -1,5 +1,5 @@
-seqfile = Results/ortho/coreogs_aligned_nuc/OG.fasta
-treefile = Results/ortho/coreogs_aligned_nuc/OG.fasta.treefile
+seqfile = ../../Results/ortho/coreogs_aligned_nuc/OG.fasta
+treefile = ../../Results/ortho/coreogs_aligned_nuc/OG.fasta.treefile
 outfile = out.mlc * main result file name
 
         noisy = 3   * 0,1,2,3,9: how much rubbish on the screen
